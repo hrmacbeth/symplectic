@@ -1,4 +1,5 @@
 import Mathlib
+import Symplectic.Eval
 
 open Manifold VectorField
 
@@ -34,9 +35,11 @@ variable (ω : Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] E →L[ℝ] ℝ, T^2[E]M⟯)
 structure IsSymplecticForm : Prop where
   alternating : ∀ p : M, ∀ X : (T[E]M) p, ω p X X = 0
   nondegenerate : ∀ p : M, Function.Bijective (ω p : E → (E →L[ℝ] ℝ))
-  closed : ∀ X Y Z, ∀ p,
-    -- TODO fill in Z(ω(X,Y)) + .... here
-    ω p (mlieBracket 𝓘(ℝ, E) X Y p) (Z p)
+  closed : ∀ (X Y Z : Cₛ^∞⟮𝓘(ℝ, E); E, (T[E]M)⟯), ∀ p : M,
+    eval (X p) (fun p ↦ ω p (Y p) (Z p))
+    - eval (Y p) (fun p ↦ ω p (X p) (Z p))
+    + eval (Z p) (fun p ↦ ω p (X p) (Y p))
+    + ω p (mlieBracket 𝓘(ℝ, E) X Y p) (Z p)
     - ω p (mlieBracket 𝓘(ℝ, E) X Z p) (Y p)
     + ω p (mlieBracket 𝓘(ℝ, E) Y Z p) (X p) = 0
 
