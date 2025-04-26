@@ -3,7 +3,8 @@ import Symplectic.Eval
 
 noncomputable section
 
-open Manifold VectorField
+open VectorField TopologicalSpace
+open scoped Manifold Real
 
 notation3 "∞" => ((⊤ : ℕ∞) : WithTop ℕ∞)
 
@@ -33,7 +34,8 @@ variable (η : Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] ℝ, (T*[E]M)⟯)
 -- i.e. a smooth section of the vector bundle Hom(TM, Hom(TM, ℝ))
 variable (ω : Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] E →L[ℝ] ℝ, T^2[E]M⟯)
 
-
+/-- A symplectic form on a manifold `M` is a 2-tensor which is alternating, nondegenerate and
+closed. -/
 structure IsSymplecticForm : Prop where
   alternating : ∀ p : M, ∀ X : (T[E]M) p, ω p X X = 0
   nondegenerate : ∀ p : M, Function.Bijective (ω p : E → (E →L[ℝ] ℝ))
@@ -69,3 +71,87 @@ def ContMDiffSection.pullback2 : Cₛ^∞⟮𝓘(ℝ, F); F →L[ℝ] F →L[ℝ
       (ContinuousLinearMap.compL ℝ F E ℝ).flip (mfderiv 𝓘(ℝ, F) 𝓘(ℝ, E) f x)
     this ∘L (ω (f x) ∘L mfderiv 𝓘(ℝ, F) 𝓘(ℝ, E) f x)
   contMDiff_toFun := sorry
+
+variable {f} in
+/-- If `f : N → M` is a smooth immersion, then the pullback of a symplectic form `ω` on `M` to `N`
+is a symplectic form on `N`. -/
+theorem IsSymplecticForm.pullback (h : IsSymplecticForm ω)
+    (hf : ∀ p, Function.Injective (mfderiv 𝓘(ℝ, F) 𝓘(ℝ, E) f p)) :
+    IsSymplecticForm (ω.pullback2 f) where
+  alternating := sorry
+  nondegenerate := sorry
+  closed := sorry
+
+/-- Given manifolds `N` and `M` equipped with 2-tensors `Ω`, `ω` respectively, a smooth map
+`f : N → M` is a *symplectic map* if `ω` pulls back to `Ω`. -/
+def ContMDiffMap.IsSymplecticMap
+    (Ω : Cₛ^∞⟮𝓘(ℝ, F); F →L[ℝ] F →L[ℝ] ℝ, T^2[F]N⟯)
+    (ω : Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] E →L[ℝ] ℝ, T^2[E]M⟯) : Prop :=
+  ω.pullback2 f = Ω
+
+/-- Given linear maps `a : E →L[ℝ] ℝ` and `b : F →L[ℝ] ℝ`, the tensor product `a ⊗ b` of these maps,
+considered as a bilinear map `E →L[ℝ] F →L[ℝ] ℝ`. -/
+def ContinuousLinearMap.tensor (a : E →L[ℝ] ℝ) (b : F →L[ℝ] ℝ) : E →L[ℝ] F →L[ℝ] ℝ :=
+  let v : ℝ →L[ℝ] F →L[ℝ] ℝ := (ContinuousLinearMap.lsmul ℝ ℝ (E := F →L[ℝ] ℝ)).flip b
+  ContinuousLinearMap.compL ℝ E _ _ v a
+
+/-- The wedge product `a ∧ b`, i.e. `a ⊗ b - b ⊗ a`, of two linear maps `a : E →L[ℝ] ℝ` and
+`b : E →L[ℝ] ℝ`. -/
+def ContinuousLinearMap.wedge (a b : E →L[ℝ] ℝ) : E →L[ℝ] E →L[ℝ] ℝ :=
+  a.tensor b - b.tensor a
+
+/-- The standard symplectic form on `ℝ^{Fin n × Fin 2}`. -/
+def StdSymplecticForm (n : ℕ) :
+    (EuclideanSpace ℝ (Fin n × Fin 2)) →L[ℝ] (EuclideanSpace ℝ (Fin n × Fin 2)) →L[ℝ] ℝ :=
+  ∑ i, (EuclideanSpace.proj (i, 0)).wedge (EuclideanSpace.proj (i, 1))
+
+/-- Given a bilinear map on a normed space `E`, the associated 2-tensor field on `E` considered as a
+manifold. -/
+def ContMDiffSection.constant2 (T : E →L[ℝ] E →L[ℝ] ℝ) :
+    Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] E →L[ℝ] ℝ, (T^2[E]E)⟯ where
+  toFun (x : E) := T
+  contMDiff_toFun := sorry
+
+-- The standard symplectic form on `ℝ^{Fin n × Fin 2}`, considered as a 2-tensor on that manifold.
+notation "ω[" n "]" => ContMDiffSection.constant2 (StdSymplecticForm n)
+
+/-- The standard symplectic form on `ℝ^{Fin n × Fin 2}` is a symplectic form, in the sense of
+satisfying the definition `IsSymplecticForm`. -/
+theorem StdSymplecticForm.isSymplecticForm (n : ℕ) : IsSymplecticForm ω[n] where
+  alternating := sorry
+  nondegenerate := sorry
+  closed := sorry
+
+variable (E) in
+/-- The inclusion map of an open set `U` in a manifold into that manifold, as a smooth map. -/
+def ContMDiffMap.val (U : Opens M) : ContMDiffMap 𝓘(ℝ, E) 𝓘(ℝ, E) U M ∞ where
+  val := Subtype.val
+  property := contMDiff_subtype_val
+
+/-- The symplectic ball `π * (x₀ ^ 2 + y₀ ^ 2 + x₁ ^ 2 + ...) < R` in `ℝ^{Fin n × Fin 2}`. -/
+def SymplecticBall (n : ℕ) (R : ℝ) : Opens (EuclideanSpace ℝ (Fin n × Fin 2)) where
+  carrier := { p | π * ∑ i, p i ^ 2 < R }
+  is_open' := sorry
+
+/-- The pullback of the standard symplectic form on `ℝ^{Fin n × Fin 2}` to the symplectic ball. -/
+def StdSymplecticFormBall (n : ℕ) (R : ℝ) :=
+  ω[n].pullback2 (ContMDiffMap.val (EuclideanSpace ℝ (Fin n × Fin 2)) (SymplecticBall n R))
+
+/-- The symplectic cylinder `π * (x₀ ^ 2 + y₀ ^ 2) < R` in `ℝ^{Fin n × Fin 2}`. -/
+def SymplecticCylinder (n : ℕ) [NeZero n] (R : ℝ) : Opens (EuclideanSpace ℝ (Fin n × Fin 2)) where
+  carrier := { p | π * ∑ i, p (0, i) ^ 2 < R }
+  is_open' := sorry
+
+/-- The pullback of the standard symplectic form on `ℝ^{Fin n × Fin 2}` to the symplectic cylinder.
+-/
+def StdSymplecticFormCylinder (n : ℕ) [NeZero n] (R : ℝ) :=
+  ω[n].pullback2 (ContMDiffMap.val (EuclideanSpace ℝ (Fin n × Fin 2)) (SymplecticCylinder n R))
+
+/-- **Gromov's nonsqueezing theorem**: if a smooth map `f` from the symplectic `r`-ball to the
+symplectic `R`-cylinder preserves the standard symplectic form, then `r ≤ R`. -/
+theorem gromovNonsqueezing {n : ℕ} [NeZero n] {r R : ℝ}
+    {f : ContMDiffMap 𝓘(ℝ, EuclideanSpace ℝ (Fin n × Fin 2)) 𝓘(ℝ, EuclideanSpace ℝ (Fin n × Fin 2))
+      (SymplecticBall n r) (SymplecticCylinder n R) ∞}
+    (hf : f.IsSymplecticMap (StdSymplecticFormBall n r) (StdSymplecticFormCylinder n R)) :
+    r ≤ R := by
+  sorry
