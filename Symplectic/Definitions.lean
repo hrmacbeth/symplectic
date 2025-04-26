@@ -149,7 +149,7 @@ def StdSymplecticFormCylinder (n : ℕ) [NeZero n] (R : ℝ) :=
 
 /-- **Gromov's nonsqueezing theorem**: if a smooth map `f` from the symplectic `r`-ball to the
 symplectic `R`-cylinder preserves the standard symplectic form, then `r ≤ R`. -/
-theorem gromovNonsqueezing {n : ℕ} [NeZero n] {r R : ℝ}
+theorem gromovNonsqueezing {n : ℕ} [NeZero n] {r R : ℝ} (hr : 0 < r) (hR : 0 < R)
     {f : ContMDiffMap 𝓘(ℝ, EuclideanSpace ℝ (Fin n × Fin 2)) 𝓘(ℝ, EuclideanSpace ℝ (Fin n × Fin 2))
       (SymplecticBall n r) (SymplecticCylinder n R) ∞}
     (hf : f.IsSymplecticMap (StdSymplecticFormBall n r) (StdSymplecticFormCylinder n R)) :
