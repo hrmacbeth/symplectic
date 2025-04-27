@@ -1,4 +1,5 @@
 import Mathlib
+import Symplectic.ContinuousLinearMap
 import Symplectic.Eval
 
 noncomputable section
@@ -72,7 +73,7 @@ def ContMDiffSection.pullback2 : Cₛ^∞⟮𝓘(ℝ, F); F →L[ℝ] F →L[ℝ
     this ∘L (ω (f x) ∘L mfderiv 𝓘(ℝ, F) 𝓘(ℝ, E) f x)
   contMDiff_toFun := sorry
 
-variable {f} in
+variable {ω f} in
 /-- If `f : N → M` is a smooth immersion, then the pullback of a symplectic form `ω` on `M` to `N`
 is a symplectic form on `N`. -/
 theorem IsSymplecticForm.pullback (h : IsSymplecticForm ω)
@@ -88,17 +89,6 @@ def ContMDiffMap.IsSymplecticMap
     (Ω : Cₛ^∞⟮𝓘(ℝ, F); F →L[ℝ] F →L[ℝ] ℝ, T^2[F]N⟯)
     (ω : Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] E →L[ℝ] ℝ, T^2[E]M⟯) : Prop :=
   ω.pullback2 f = Ω
-
-/-- Given linear maps `a : E →L[ℝ] ℝ` and `b : F →L[ℝ] ℝ`, the tensor product `a ⊗ b` of these maps,
-considered as a bilinear map `E →L[ℝ] F →L[ℝ] ℝ`. -/
-def ContinuousLinearMap.tensor (a : E →L[ℝ] ℝ) (b : F →L[ℝ] ℝ) : E →L[ℝ] F →L[ℝ] ℝ :=
-  let v : ℝ →L[ℝ] F →L[ℝ] ℝ := (ContinuousLinearMap.lsmul ℝ ℝ (E := F →L[ℝ] ℝ)).flip b
-  ContinuousLinearMap.compL ℝ E _ _ v a
-
-/-- The wedge product `a ∧ b`, i.e. `a ⊗ b - b ⊗ a`, of two linear maps `a : E →L[ℝ] ℝ` and
-`b : E →L[ℝ] ℝ`. -/
-def ContinuousLinearMap.wedge (a b : E →L[ℝ] ℝ) : E →L[ℝ] E →L[ℝ] ℝ :=
-  a.tensor b - b.tensor a
 
 /-- The standard symplectic form on `ℝ^{Fin n × Fin 2}`. -/
 def StdSymplecticForm (n : ℕ) :
@@ -128,30 +118,37 @@ def ContMDiffMap.val (U : Opens M) : ContMDiffMap 𝓘(ℝ, E) 𝓘(ℝ, E) U M 
   val := Subtype.val
   property := contMDiff_subtype_val
 
+/-- The restriction of a smooth 1-form `η` on `M` to an open set `U`. -/
+def ContMDiffSection.restrict1 (U : Opens M) : Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] ℝ, T*[E]U⟯ :=
+  η.pullback1 (ContMDiffMap.val E U)
+
+/-- The restriction of a smooth 2-tensor `ω` on `M` to an open set `U`. -/
+def ContMDiffSection.restrict2 (U : Opens M) : Cₛ^∞⟮𝓘(ℝ, E); E →L[ℝ] E →L[ℝ] ℝ, T^2[E]U⟯ :=
+  ω.pullback2 (ContMDiffMap.val E U)
+
+variable {ω} in
+/-- The restriction of a symplectic form `ω` on `M` to an open set `U` is a symplectic form on `U`.
+-/
+theorem IsSymplecticForm.restrict (h : IsSymplecticForm ω) (U : Opens M) :
+    IsSymplecticForm (ω.restrict2 U) :=
+  h.pullback sorry
+
 /-- The symplectic ball `π * (x₀ ^ 2 + y₀ ^ 2 + x₁ ^ 2 + ...) < R` in `ℝ^{Fin n × Fin 2}`. -/
 def SymplecticBall (n : ℕ) (R : ℝ) : Opens (EuclideanSpace ℝ (Fin n × Fin 2)) where
   carrier := { p | π * ∑ i, p i ^ 2 < R }
   is_open' := sorry
-
-/-- The pullback of the standard symplectic form on `ℝ^{Fin n × Fin 2}` to the symplectic ball. -/
-def StdSymplecticFormBall (n : ℕ) (R : ℝ) :=
-  ω[n].pullback2 (ContMDiffMap.val (EuclideanSpace ℝ (Fin n × Fin 2)) (SymplecticBall n R))
 
 /-- The symplectic cylinder `π * (x₀ ^ 2 + y₀ ^ 2) < R` in `ℝ^{Fin n × Fin 2}`. -/
 def SymplecticCylinder (n : ℕ) [NeZero n] (R : ℝ) : Opens (EuclideanSpace ℝ (Fin n × Fin 2)) where
   carrier := { p | π * ∑ i, p (0, i) ^ 2 < R }
   is_open' := sorry
 
-/-- The pullback of the standard symplectic form on `ℝ^{Fin n × Fin 2}` to the symplectic cylinder.
--/
-def StdSymplecticFormCylinder (n : ℕ) [NeZero n] (R : ℝ) :=
-  ω[n].pullback2 (ContMDiffMap.val (EuclideanSpace ℝ (Fin n × Fin 2)) (SymplecticCylinder n R))
-
 /-- **Gromov's nonsqueezing theorem**: if a smooth map `f` from the symplectic `r`-ball to the
 symplectic `R`-cylinder preserves the standard symplectic form, then `r ≤ R`. -/
 theorem gromovNonsqueezing {n : ℕ} [NeZero n] {r R : ℝ} (hr : 0 < r) (hR : 0 < R)
     {f : ContMDiffMap 𝓘(ℝ, EuclideanSpace ℝ (Fin n × Fin 2)) 𝓘(ℝ, EuclideanSpace ℝ (Fin n × Fin 2))
       (SymplecticBall n r) (SymplecticCylinder n R) ∞}
-    (hf : f.IsSymplecticMap (StdSymplecticFormBall n r) (StdSymplecticFormCylinder n R)) :
+    (hf : f.IsSymplecticMap (ω[n].restrict2 (SymplecticBall n r))
+      (ω[n].restrict2 (SymplecticCylinder n R))) :
     r ≤ R := by
   sorry
