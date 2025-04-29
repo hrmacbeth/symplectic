@@ -50,7 +50,10 @@ structure IsSymplecticForm : Prop where
 
 theorem IsSymplecticForm.eval_swap (h : IsSymplecticForm ω) :
     ∀ p : M, ∀ X Y : (T[E]M) p, ω p X Y = - ω p Y X := by
-  sorry
+  intro p X Y
+  have h2 : ω p X Y + ω p Y X = ω p (X + Y) (X + Y) := by
+    simp [h.alternating p]
+  simpa only [h.alternating p, add_eq_zero_iff_eq_neg] using h2
 
 variable
   -- F a real Banach space
@@ -79,7 +82,7 @@ is a symplectic form on `N`. -/
 theorem IsSymplecticForm.pullback (h : IsSymplecticForm ω)
     (hf : ∀ p, Function.Injective (mfderiv 𝓘(ℝ, F) 𝓘(ℝ, E) f p)) :
     IsSymplecticForm (ω.pullback2 f) where
-  alternating := sorry
+  alternating p _ := h.alternating (f p) _
   nondegenerate := sorry
   closed := sorry
 
